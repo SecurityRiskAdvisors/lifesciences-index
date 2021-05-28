@@ -1,0 +1,23 @@
+block:
+- Suspicious behavior is blocked by EDR or other endpoint security tool
+controls:
+- EDR
+description: Inject malicious DLL into a running instance of svchost.exe
+detect:
+- Suspicious behavior is detected by EDR or other endpoint security tool
+guidance:
+- (Set beacon to use CreateRemoteThread+VirtualAlloc in profile)
+- beacon> dllinject {{ pid }}
+logs:
+- edr:telemetry
+metadata:
+  groups:
+  - Wizard Spider
+  isv: 1
+  tactic: TA0005
+  tid: T1055.001
+  x_tools:
+  - Cobalt Strike
+name: DLL Injection - svchost
+platforms:
+- windows

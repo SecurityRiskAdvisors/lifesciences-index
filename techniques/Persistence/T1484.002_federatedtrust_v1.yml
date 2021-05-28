@@ -1,0 +1,20 @@
+block:
+- null
+controls:
+- SIEM
+description: Create a new federation trust in Azure Active Directory to allow for
+  the attacker controlled domain to sign SAML tokens
+detect:
+- Use Azure audit logs to alert on anomalous federation setting modification events
+- https://github.com/Azure/Azure-Sentinel/blob/master/Detections/AuditLogs/ADFSDomainTrustMods.yaml
+logs:
+- application
+metadata:
+  groups:
+  - APT29
+  isv: 1
+  tactic: TA0003
+  tid: T1484.002
+name: Create New Federation Trust
+prerequisites:
+- aad_admin
