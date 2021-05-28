@@ -1,9 +1,25 @@
-# Life Sciences Index
+# Life Sciences Threat Simulation Index
 
-The "index.yml" bundle contains test cases for the following groups/software:
+Life Sciences Threat Simulation Index Release Candidate v1 (Q2 2021)
 
-- [UNC2452](https://attack.mitre.org/groups/G0118/)
-- [Ryuk](https://attack.mitre.org/software/S0446/)
+## Files
 
-Please note that the content in this repository is subject to change considerably prior to the release of the initial Index bundle.
+- merged.yml : all test cases in a single file
+- navigator.json : MITRE Navigator layer for test cases
+- summary.csv : test case names, MITRE technique IDs, MITRE tactics, and descriptions for all test cases in CSV format
+- techniques : directory of all test cases broken down by MITRE tactic
+
+## Methodology
+
+Test cases are based on MITRE-tracked intelligence and the general process for determining test cases for inclusion is as follows:
+
+1. Identify initial list of groups of interest
+2. Map groups to MITRE-tracked groups and filter out non-MITRE groups
+3. Extract intelligence for technique examples for each group and filter out anything older than 12 months 
+    - this information is available in MITRE Enterprise CTI data
+4. For each technique example, read source intelligence to determine if activity can be simulated
+5. Develop list for simulatable activities
+6. Filter out items from list that do not provide worthwhile simulation candidates
+7. Develop full test cases for remaining items
+
 

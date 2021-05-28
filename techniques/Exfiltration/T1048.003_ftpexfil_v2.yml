@@ -1,0 +1,25 @@
+block:
+- Connections to known malicious domains/IPs are blocked
+- If there is no business justification, block outbound FTP communications
+controls:
+- DLP
+- Firewall
+- SIEM
+description: Exfiltrate data from the internal network to an external system via FTP
+detect:
+- Network-based DLP detects sensitive data egressing the network
+- Connections with suspicious characteristics (e.g. first seen in environment, low
+  domain age, weak/unknown reputation, bad/unknown categorization) generate alerts
+  in the SIEM or network security controls
+guidance:
+- ftp> | USER {{ user }} PASS {{ password }} OPTS utf8 on PWD TYPE I PASV STORE {{
+  local_file }} {{ dest_name }} PASV STORE {{ local_file }} {{ dest_name }}
+logs:
+- network
+metadata:
+  groups:
+  - Wizard Spider
+  isv: 1
+  tactic: TA0010
+  tid: T1048.003
+name: Exfiltration over FTP

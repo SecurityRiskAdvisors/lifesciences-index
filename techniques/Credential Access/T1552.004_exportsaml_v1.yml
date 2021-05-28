@@ -1,0 +1,27 @@
+block:
+- null
+controls:
+- SIEM
+description: Extract the SAML signing certificate from ADFS. This certificate is used
+  to sign SAML messages from ADFS during SSO sign-in flows. Once exported, an attacker
+  can use it to forge valid SAML messages to federated application and masquerade
+  as any user in those application.
+detect:
+- Configure a SACL on the ADFS Policy Story DKM group then alert on anomalous object
+  access events containing properties related to the SAML materials
+- https://techcommunity.microsoft.com/t5/azure-sentinel/solarwinds-post-compromise-hunting-with-azure-sentinel/ba-p/1995095
+guidance:
+- cmd> ADFSdump.exe
+logs:
+- application
+metadata:
+  groups:
+  - APT29
+  isv: 1
+  tactic: TA0006
+  tid: T1552.004
+  x_tools:
+  - https://github.com/fireeye/adfsdump
+name: Export SAML Certificate from ADFS
+prerequisites:
+- adfs_admin

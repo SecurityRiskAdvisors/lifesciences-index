@@ -1,0 +1,31 @@
+block:
+- Connections to known malicious domains/IPs are blocked
+controls:
+- IDS
+- IPS
+- Firewall
+- SIEM
+description: Download a tool from a public hosting location such as GitHub onto the
+  victim system
+detect:
+- Connections to known malicious domains/IPs are detected
+- Signatues for known bad tools are detected by network security controls such as
+  an ID/PS
+- Connections with suspicious characteristics (e.g. first seen in environment, low
+  domain age, weak/unknown reputation, bad/unknown categorization) generate alerts
+  in the SIEM or network security controls
+logs:
+- network
+metadata:
+  groups:
+  - Lazarus Group
+  - APT29
+  - MuddyWater
+  isv: 1
+  tactic: TA0011
+  tid: T1105
+name: Remote Tool Download
+platforms:
+- windows
+- macos
+- linux
