@@ -2,6 +2,14 @@
 
 Life Sciences Threat Simulation Index Release Candidate v1 (Q2 2021)
 
+## Groups
+
+- Wizard Spider
+- Lazarus Group
+- Kimsuky
+- APT29
+- MuddyWater
+
 ## Files
 
 - merged.yml : all test cases in a single file
