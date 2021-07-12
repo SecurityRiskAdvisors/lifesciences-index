@@ -235,33 +235,6 @@ Credential Access:
   - null
   controls:
   - SIEM
-  description: Extract the SAML signing certificate from ADFS. This certificate is
-    used to sign SAML messages from ADFS during SSO sign-in flows. Once exported,
-    an attacker can use it to forge valid SAML messages to federated application and
-    masquerade as any user in those application.
-  detect:
-  - Configure a SACL on the ADFS Policy Story DKM group then alert on anomalous object
-    access events containing properties related to the SAML materials
-  - https://techcommunity.microsoft.com/t5/azure-sentinel/solarwinds-post-compromise-hunting-with-azure-sentinel/ba-p/1995095
-  guidance:
-  - cmd> ADFSdump.exe
-  logs:
-  - application
-  metadata:
-    groups:
-    - APT29
-    isv: 1
-    tactic: TA0006
-    tid: T1552.004
-    x_tools:
-    - https://github.com/fireeye/adfsdump
-  name: Export SAML Certificate from ADFS
-  prerequisites:
-  - adfs_admin
-- block:
-  - null
-  controls:
-  - SIEM
   - IDS
   description: Extract domain data, such as hashed credentials, from a target domain
     controller using replication
@@ -316,6 +289,34 @@ Credential Access:
   - windows
 Defense Evasion:
 - block:
+  - Remote access to the service control manager is blocked by DACLs
+  controls:
+  - EDR
+  - SIEM
+  - Hardening
+  description: Disable a service associated with a security tool running on the system
+  detect:
+  - Alert on the service stop event for services related to critical functions like
+    security tools using native Windows logs and/or endpoint security tool telemetry
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> sc \\{{ target }} stop {{ service }}
+  logs:
+  - winevent:configured
+  - edr:telemetry
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0005
+    tid: T1562.001
+  name: Disable Security Tool Service
+  prerequisites:
+  - logon_rights
+  - local_admin
+- block:
   - Suspicious process execution is blocked by EDR or other endpoint security tool
   controls:
   - EDR
@@ -355,6 +356,7 @@ Defense Evasion:
   metadata:
     groups:
     - Wizard Spider
+    - Conti
     isv: 1
     tactic: TA0005
     tid: T1055.001
@@ -364,33 +366,27 @@ Defense Evasion:
   platforms:
   - windows
 - block:
-  - Remote access to the service control manager is blocked by DACLs
+  - Suspicious behavior is blocked by EDR or other endpoint security tool
   controls:
   - EDR
-  - SIEM
-  - Hardening
-  description: Disable a service associated with a security tool running on the system
+  description: Launch a executable program that will load an encryted DLL from its
+    resource section into memory
   detect:
-  - Alert on the service stop event for services related to critical functions like
-    security tools using native Windows logs and/or endpoint security tool telemetry
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
+  - Suspicious behavior is detected by EDR or other endpoint security tool
   guidance:
-  - cmd> sc \\{{ target }} stop {{ service }}
+  - '{{ binary_payload }}'
   logs:
-  - winevent:configured
   - edr:telemetry
   metadata:
     groups:
     - Wizard Spider
-    - APT29
+    - Conti
     isv: 1
     tactic: TA0005
-    tid: T1562.001
-  name: Disable Security Tool Service
-  prerequisites:
-  - logon_rights
-  - local_admin
+    tid: T1055.001
+  name: DLL Loader
+  platforms:
+  - windows
 - block:
   - null
   controls:
@@ -451,52 +447,23 @@ Defense Evasion:
   prerequisites:
   - local_admin
 Discovery:
-- block:
-  - null
-  controls:
+- controls:
   - SIEM
-  - EDR
-  description: Identify domain trust relationships
+  description: Use net.exe to list out shares for the system
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
   guidance:
-  - cmd> nltest.exe /domain_trusts /all_trusts
+  - cmd> net.exe view /all
   logs:
   - process_create
   metadata:
     groups:
     - Wizard Spider
-    - APT29
     isv: 1
     tactic: TA0007
-    tid: T1482
-  name: Domain Trust Discovery with nltest
-  platforms:
-  - windows
-- block:
-  - null
-  controls:
-  - SIEM
-  - EDR
-  description: Identify domain trust relationships
-  detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> adfind.exe -gcb -sc trustdmp > trusts.txt
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0007
-    tid: T1482
-    x_tool_links:
-    - http://www.joeware.net/freetools/tools/adfind/
-  name: Domain Trust Discovery with ADFind
+    tid: T1135
+  name: Net View Share Discovery
   platforms:
   - windows
 - block:
@@ -579,25 +546,6 @@ Discovery:
   name: Enumerate Domain Information using Renamed adfind.exe
   platforms:
   - windows
-- controls:
-  - SIEM
-  description: Use net.exe to list out shares for the system
-  detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> net.exe view /all
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    isv: 1
-    tactic: TA0007
-    tid: T1135
-  name: Net View Share Discovery
-  platforms:
-  - windows
 - block:
   - null
   controls:
@@ -619,6 +567,54 @@ Discovery:
     tactic: TA0007
     tid: T1518.001
   name: Security Tool Discovery
+  platforms:
+  - windows
+- block:
+  - null
+  controls:
+  - SIEM
+  - EDR
+  description: Identify domain trust relationships
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> nltest.exe /domain_trusts /all_trusts
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0007
+    tid: T1482
+  name: Domain Trust Discovery with nltest
+  platforms:
+  - windows
+- block:
+  - null
+  controls:
+  - SIEM
+  - EDR
+  description: Identify domain trust relationships
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> adfind.exe -gcb -sc trustdmp > trusts.txt
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0007
+    tid: T1482
+    x_tool_links:
+    - http://www.joeware.net/freetools/tools/adfind/
+  name: Domain Trust Discovery with ADFind
   platforms:
   - windows
 - block:
@@ -664,6 +660,46 @@ Discovery:
     tactic: TA0007
     tid: T1087
   name: Exchange User-Role Mapping Discovery
+  platforms:
+  - windows
+- controls:
+  - SIEM
+  description: Enumerate running processes via tasklist
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> tasklist.exe
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Conti
+    isv: 1
+    tactic: TA0007
+    tid: T1057
+  name: Process Discovery via Tasklist
+  platforms:
+  - windows
+  - macos
+  - linux
+- controls:
+  - SIEM
+  description: Use arp.exe to list recent connections
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> arp -a
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Conti
+    isv: 1
+    tactic: TA0007
+    tid: T1016
+  name: List Connections with ARP
   platforms:
   - windows
 Execution:
@@ -797,6 +833,34 @@ Exfiltration:
   name: Exfiltration over FTP
 Impact:
 - block:
+  - Suspicious process execution is blocked by EDR or other endpoint security tool
+  - Executable on disk deleted/quarantined by antivirus or other endpoint security
+    tool
+  controls:
+  - SIEM
+  - EDR
+  description: 'Encrypt a large amount of files on a remote share to simulate remote
+    ransomware behavior
+
+    '
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool
+  - A large amount of file deletion and creations and/or file creations with known
+    ransomware extensions are alerted on in the SIEM
+  guidance:
+  - '{{ ransomware_binary }}'
+  logs:
+  - winevent:configured
+  - edr:telemetry
+  metadata:
+    groups:
+    - Wizard Spider
+    - Conti
+    isv: 1
+    tactic: TA0040
+    tid: T1021.002
+  name: Encrypt a Large Amount of Files Remotely
+- block:
   - null
   controls:
   - EDR
@@ -817,6 +881,7 @@ Impact:
   metadata:
     groups:
     - Wizard Spider
+    - Conti
     isv: 1
     tactic: TA0040
     tid: T1489
@@ -825,52 +890,64 @@ Impact:
   - windows
   prerequisites:
   - local_admin
-Initial Access:
 - block:
-  - Malicious link blocked/quarantined by email gateway
+  - Suspicious process execution is blocked by EDR or other endpoint security tool
+  - Executable on disk deleted/quarantined by antivirus or other endpoint security
+    tool
   controls:
-  - Mail Gateway
-  description: Send a spearphishing email to a target inbox that contains a link to
-    a malicious payload
-  detect:
-  - Malicious link alerted by email gateway
-  guidance:
-  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
-    {{ subject }} -Body {{ bodywithlink }} -To {{ target }} -From {{ from }}
-  logs:
-  - mail
-  metadata:
-    groups:
-    - Wizard Spider
-    - MuddyWater
-    isv: 1
-    tactic: TA0001
-    tid: T1566.002
-  name: Spearphishing Link - Macro
-- block:
-  - Malicious document blocked/quarantined by email gateway
-  controls:
-  - Mail Gateway
-  description: 'Send a link to a PDF attachment payload that has a link to an exe
-    hosted on Google Drive to a target user.
+  - SIEM
+  - EDR
+  description: 'Encrypt a large amount of files on disk to simulate ransomware behavior
 
     '
   detect:
-  - Malicious document alerted by email gateway
+  - Suspicious process execution is detected by EDR or other endpoint security tool
+  - A large amount of file deletion and creations and/or file creations with known
+    ransomware extensions are alerted on in the SIEM
   guidance:
-  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
-    {{ subject }} -Body {{ body }} -To {{ target }} -From {{ from }} -Attachments
-    {{ attachment }}
+  - '{{ ransomware_binary }}'
   logs:
-  - mail
+  - winevent:configured
+  - edr:telemetry
   metadata:
     groups:
-    - Wizard Spider
-    - MuddyWater
+    - Conti
     isv: 1
-    tactic: TA0001
-    tid: T1566.002
-  name: Spearphishing Link - PDF with Link (Google Drive)
+    tactic: TA0040
+    tid: T1486
+  name: Encrypt a Large Amount of Files
+- block:
+  - Suspicious process execution is blocked by EDR or other endpoint security tool
+  controls:
+  - EDR
+  - SIEM
+  description: 'Delete volume shadow copies with vssadmin.exe to prevent file recovery
+
+    '
+  detect:
+  - Use Windows file system auditing capabilities to monitor access attempts for specific
+    files and/or paths (e.g. paths related to Volume Shadow Services)
+  guidance:
+  - cmd> vssadmin.exe delete shadows /all /quiet
+  - 'cmd> vssadmin resize shadowstorage /for={{ drive_letter }}: /on=c: /maxsize=401MB
+    && vssadmin resize shadowstorage /for={{ drive_letter }}: /on={{ drive_letter
+    }}: /maxsize=unbounded'
+  logs:
+  - process_create
+  - edr:telemetry
+  - winevent:configured
+  metadata:
+    groups:
+    - Conti
+    isv: 1
+    tactic: TA0040
+    tid: T1490
+  name: Delete Shadows with vssadmin
+  platforms:
+  - windows
+  prerequisites:
+  - local_admin
+Initial Access:
 - block:
   - Malicious document blocked/quarantined by email gateway
   controls:
@@ -919,39 +996,52 @@ Initial Access:
     tactic: TA0001
     tid: T1566.001
   name: Spearphishing Attachment - Macro
-Lateral Movement:
 - block:
-  - Remote access to the service control manager is blocked by a DACL, preventing
-    service creation by remote users
-  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
+  - Malicious link blocked/quarantined by email gateway
   controls:
-  - SIEM
-  - EDR
-  - Hardening
-  - Antivirus
-  description: Move laterally to a system by copying an exe to the system then executing
-    it as a service
+  - Mail Gateway
+  description: Send a spearphishing email to a target inbox that contains a link to
+    a malicious payload
   detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
+  - Malicious link alerted by email gateway
   guidance:
-  - cmd> copy {{ exe }} \\{{ target }}\C$\Windows\{{ exe }}
-  - cmd> sc \\{{ target }} create {{ service }} binPath= c:\Windows\{{ exe }}
-  - cmd> sc \\{{ target }} start {{ service }}
+  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
+    {{ subject }} -Body {{ bodywithlink }} -To {{ target }} -From {{ from }}
   logs:
-  - process_create
+  - mail
   metadata:
     groups:
     - Wizard Spider
+    - MuddyWater
     isv: 1
-    tactic: TA0008
-    tid: T1569.002
-  name: Remote Execution via Service
-  platforms:
-  - windows
-  prerequisites:
-  - local_admin
+    tactic: TA0001
+    tid: T1566.002
+  name: Spearphishing Link - Macro
+- block:
+  - Malicious document blocked/quarantined by email gateway
+  controls:
+  - Mail Gateway
+  description: 'Send a link to a PDF attachment payload that has a link to an exe
+    hosted on Google Drive to a target user.
+
+    '
+  detect:
+  - Malicious document alerted by email gateway
+  guidance:
+  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
+    {{ subject }} -Body {{ body }} -To {{ target }} -From {{ from }} -Attachments
+    {{ attachment }}
+  logs:
+  - mail
+  metadata:
+    groups:
+    - Wizard Spider
+    - MuddyWater
+    isv: 1
+    tactic: TA0001
+    tid: T1566.002
+  name: Spearphishing Link - PDF with Link (Google Drive)
+Lateral Movement:
 - block:
   - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
   controls:
@@ -967,6 +1057,7 @@ Lateral Movement:
   metadata:
     groups:
     - Wizard Spider
+    - Conti
     isv: 1
     tactic: TA0008
     tid: T1021.002
@@ -975,32 +1066,6 @@ Lateral Movement:
   - windows
   prerequisites:
   - local_admin
-- block:
-  - null
-  controls:
-  - SIEM
-  - EDR
-  - UEBA
-  description: Move laterally to a remote system via RDP
-  detect:
-  - Logons with suspicious characteristics (e.g. first logon, anomalous logon time,
-    non-standard authentication package) generate alerts in the SIEM or UEBA
-  guidance:
-  - cmd> mstsc.exe /v:{{ target }}
-  logs:
-  - winevent:configured
-  - network
-  metadata:
-    groups:
-    - Wizard Spider
-    isv: 1
-    tactic: TA0008
-    tid: T1021.001
-  name: Lateral Movement via RDP
-  platforms:
-  - windows
-  prerequisites:
-  - logon_rights
 - block:
   - Suspicious process execution/behavior is blocked by EDR or other endpoint security
     tool
@@ -1066,6 +1131,64 @@ Lateral Movement:
   - windows
   prerequisites:
   - logon_rights
+- block:
+  - null
+  controls:
+  - SIEM
+  - EDR
+  - UEBA
+  description: Move laterally to a remote system via RDP
+  detect:
+  - Logons with suspicious characteristics (e.g. first logon, anomalous logon time,
+    non-standard authentication package) generate alerts in the SIEM or UEBA
+  guidance:
+  - cmd> mstsc.exe /v:{{ target }}
+  logs:
+  - winevent:configured
+  - network
+  metadata:
+    groups:
+    - Wizard Spider
+    isv: 1
+    tactic: TA0008
+    tid: T1021.001
+  name: Lateral Movement via RDP
+  platforms:
+  - windows
+  prerequisites:
+  - logon_rights
+- block:
+  - Remote access to the service control manager is blocked by a DACL, preventing
+    service creation by remote users
+  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
+  controls:
+  - SIEM
+  - EDR
+  - Hardening
+  - Antivirus
+  description: Move laterally to a system by copying an exe to the system then executing
+    it as a service
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
+  guidance:
+  - cmd> copy {{ exe }} \\{{ target }}\C$\Windows\{{ exe }}
+  - cmd> sc \\{{ target }} create {{ service }} binPath= c:\Windows\{{ exe }}
+  - cmd> sc \\{{ target }} start {{ service }}
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    isv: 1
+    tactic: TA0008
+    tid: T1569.002
+  name: Remote Execution via Service
+  platforms:
+  - windows
+  prerequisites:
+  - local_admin
 - block:
   - Suspicious process execution/behavior is blocked by EDR or other endpoint security
     tool
@@ -1172,28 +1295,6 @@ Persistence:
   platforms:
   - windows
 - block:
-  - null
-  controls:
-  - SIEM
-  description: In Azure AD, add a new credential to an OAuth application
-  detect:
-  - Use Azure audit logs to alert on anomalous service principal credential events
-  - https://techcommunity.microsoft.com/t5/azure-sentinel/solarwinds-post-compromise-hunting-with-azure-sentinel/ba-p/1995095
-  guidance:
-  - In the Azure console, select an application from the application list, navigate
-    to the "Certificates & secrets" page, then add a new client secret for the application
-  logs:
-  - application
-  metadata:
-    groups:
-    - APT29
-    isv: 1
-    tactic: TA0003
-    tid: T1098.001
-  name: New Credential for Azure OAuth application
-  prerequisites:
-  - aad_admin
-- block:
   - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
   - Suspicious process execution is blocked by EDR or other endpoint security tool
   - Anomalous WMI event filter, consumer, and/or filter to consumer binding creation
@@ -1239,6 +1340,28 @@ Persistence:
   - null
   controls:
   - SIEM
+  description: In Azure AD, add a new credential to an OAuth application
+  detect:
+  - Use Azure audit logs to alert on anomalous service principal credential events
+  - https://techcommunity.microsoft.com/t5/azure-sentinel/solarwinds-post-compromise-hunting-with-azure-sentinel/ba-p/1995095
+  guidance:
+  - In the Azure console, select an application from the application list, navigate
+    to the "Certificates & secrets" page, then add a new client secret for the application
+  logs:
+  - application
+  metadata:
+    groups:
+    - APT29
+    isv: 1
+    tactic: TA0003
+    tid: T1098.001
+  name: New Credential for Azure OAuth application
+  prerequisites:
+  - aad_admin
+- block:
+  - null
+  controls:
+  - SIEM
   - EDR
   description: In Exchange, associate a new device ID to an inbox to allow that device
     to perform ActiveSync
@@ -1261,23 +1384,3 @@ Persistence:
   name: Enable Exchange ActiveSync for a New Device ID
   prerequisites:
   - exchange_admin
-- block:
-  - null
-  controls:
-  - SIEM
-  description: Create a new federation trust in Azure Active Directory to allow for
-    the attacker controlled domain to sign SAML tokens
-  detect:
-  - Use Azure audit logs to alert on anomalous federation setting modification events
-  - https://github.com/Azure/Azure-Sentinel/blob/master/Detections/AuditLogs/ADFSDomainTrustMods.yaml
-  logs:
-  - application
-  metadata:
-    groups:
-    - APT29
-    isv: 1
-    tactic: TA0003
-    tid: T1484.002
-  name: Create New Federation Trust
-  prerequisites:
-  - aad_admin
