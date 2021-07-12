@@ -13,6 +13,7 @@ logs:
 metadata:
   groups:
   - Wizard Spider
+  - Conti
   isv: 1
   tactic: TA0005
   tid: T1055.001

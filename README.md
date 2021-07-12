@@ -4,11 +4,12 @@ Life Sciences Threat Simulation Index Release Candidate v1 (Q2 2021)
 
 ## Groups
 
-- Wizard Spider
-- Lazarus Group
-- Kimsuky
-- APT29
-- MuddyWater
+- [Wizard Spider](https://attack.mitre.org/groups/G0102/)
+- [Lazarus Group](https://attack.mitre.org/groups/G0032/)
+- [Kimsuky](https://attack.mitre.org/groups/G0094/)
+- [MuddyWater](https://attack.mitre.org/groups/G0069/)
+- [APT29](https://attack.mitre.org/groups/G0016/)
+- [Conti](https://attack.mitre.org/software/S0575/)
 
 ## Files
 
