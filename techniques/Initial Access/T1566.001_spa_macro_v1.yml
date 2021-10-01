@@ -2,8 +2,10 @@ block:
 - Malicious document blocked/quarantined by email gateway
 controls:
 - Mail Gateway
-description: Send a spearphishing attachment containing a malicious macro payload
+description: 'Send a spearphishing attachment containing a malicious macro payload
   to a target inbox
+
+  '
 detect:
 - Malicious document alerted by email gateway
 guidance:

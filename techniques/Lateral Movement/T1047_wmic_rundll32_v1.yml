@@ -6,7 +6,8 @@ controls:
 - EDR
 - Antivirus
 - UEBA
-description: Move laterally to another system by using WMI and rundll32
+description: Move laterally to another system by using WMI to execute a DLL payload
+  using rundll32.
 detect:
 - Suspicious process execution/behavior is detected by EDR or other endpoint security
   tool, or alerted in SIEM based on process creation events

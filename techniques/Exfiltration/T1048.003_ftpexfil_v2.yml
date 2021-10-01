@@ -12,8 +12,9 @@ detect:
   domain age, weak/unknown reputation, bad/unknown categorization) generate alerts
   in the SIEM or network security controls
 guidance:
-- ftp> | USER {{ user }} PASS {{ password }} OPTS utf8 on PWD TYPE I PASV STORE {{
-  local_file }} {{ dest_name }} PASV STORE {{ local_file }} {{ dest_name }}
+- "ftp> \nUSER {{ user }}\nPASS {{ password }}\nOPTS utf8 on\nPWD\nTYPE I\nPASV\n\
+  STORE {{ local_file }} {{ dest_name }}\nPASV\nSTORE {{ local_file }} {{ dest_name\
+  \ }}\n"
 logs:
 - network
 metadata:

@@ -3,7 +3,7 @@ block:
 controls:
 - EDR
 - SIEM
-description: Obfuscate then execute suspicious commands
+description: Execute obfuscated suspicious commands on an endpoint
 detect:
 - Suspicious process execution is detected by EDR or other endpoint security tool,
   or alerted in SIEM based on process creation events
