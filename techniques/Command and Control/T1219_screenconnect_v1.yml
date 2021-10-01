@@ -7,7 +7,6 @@ controls:
 - IDS
 - IPS
 - Firewall
-- SIEM
 description: Establish connection to system using ScreenConnect (ConnectWise Control)
 detect:
 - Connections to known remote access service domains/IPs are detected

@@ -17,5 +17,3 @@ metadata:
 name: Process Discovery via Tasklist
 platforms:
 - windows
-- macos
-- linux

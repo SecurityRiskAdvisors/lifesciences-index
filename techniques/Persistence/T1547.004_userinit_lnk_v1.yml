@@ -3,8 +3,8 @@ block:
 controls:
 - EDR
 - SIEM
-description: Persist on a system by creating an LNK to a payload then adding the LNK
-  to the userinit registry
+description: Persist on a system by creating an LNK in the user's startup folder that
+  points an exe payload then adding the LNK to the userinit registry
 detect:
 - Detect suspicious registry key creation using Windows event id 4656 after configuring
   auditing on the Registry or specific paths or use EDR telemetry

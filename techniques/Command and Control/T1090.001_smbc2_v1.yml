@@ -4,12 +4,12 @@ controls:
 - UEBA
 - ID/PS
 - Hardening
-description: Establish and communicate over an SMB C2 channel on the internal network
+description: Establish and communicate over a Cobalt Strike SMB C2 channel on the
+  internal network
 detect:
 - Anomalous SMB communications are detected by UEBA and/or the IDS
 guidance:
-- (after SMB-beaconing target )
-- beacon> link {{ target }}
+- "(after establishing SMB beacon on target)\nbeacon> link {{ target }} \n"
 logs:
 - network
 - winevent:configured

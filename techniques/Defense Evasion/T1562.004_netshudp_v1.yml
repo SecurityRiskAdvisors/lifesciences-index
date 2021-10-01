@@ -3,8 +3,8 @@ block:
 controls:
 - SIEM
 - EDR
-description: Block UDP ports 53 (DNS) and 137 (NetBIOS) on the Windows firewall using
-  netsh.exe.
+description: Block outbound traffic to UDP ports 53 (DNS) and 137 (NetBIOS) on the
+  Windows firewall using netsh.exe.
 detect:
 - Suspicious process execution is detected by EDR or other endpoint security tool,
   or alerted in SIEM based on process creation events

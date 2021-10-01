@@ -2,7 +2,10 @@ block:
 - Suspicious behavior is blocked by EDR or other endpoint security tool
 controls:
 - EDR
-description: Inject malicious DLL into a running instance of svchost.exe
+description: Inject a malicious reflective DLL into a running instance of svchost.exe
+  using Cobalt Strike's "dllinject" command. Before running, first modify the Cobalt
+  Strike profile's process injection block to prioritize use of CreateRemoteThread
+  as the executor and VirtualAlloc as the allocator.
 detect:
 - Suspicious behavior is detected by EDR or other endpoint security tool
 guidance:

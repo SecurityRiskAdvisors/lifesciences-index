@@ -3,8 +3,8 @@ block:
 controls:
 - SIEM
 - EDR
-description: Use PowerShell to export a target user's Exchange mailbox to a file then
-  delete the export request. (Only works for Exchange on-premise)
+description: Use Exchange PowerShell modules to export a target user's Exchange mailbox
+  to a file then delete the export request. (for Exchange on-premise only)
 detect:
 - Use Exchange audit logs to alert on anomalous ActiveSync changes to user mailbox(es)
 - Suspicious process execution is detected by EDR or other endpoint security tool,

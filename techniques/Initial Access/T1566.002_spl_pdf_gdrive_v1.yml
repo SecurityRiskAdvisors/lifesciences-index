@@ -2,8 +2,8 @@ block:
 - Malicious document blocked/quarantined by email gateway
 controls:
 - Mail Gateway
-description: 'Send a link to a PDF attachment payload that has a link to an exe hosted
-  on Google Drive to a target user.
+description: 'Send a link to a PDF payload that has a link to an exe hosted on Google
+  Drive to a target user.
 
   '
 detect:

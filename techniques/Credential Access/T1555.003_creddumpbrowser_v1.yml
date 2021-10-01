@@ -3,7 +3,7 @@ block:
 controls:
 - EDR
 - SIEM
-description: Extract credentials stored in browsers
+description: Extract credentials stored in browsers using a compiled version of LaZagne
 detect:
 - Suspicious process/file access is detected by EDR or other endpoint security tool
 - Credential dumping tools detected via specific module loads and/or suspicious process
@@ -20,6 +20,8 @@ metadata:
   isv: 1
   tactic: TA0006
   tid: T1555.003
+  x_tool_links:
+  - https://github.com/AlessandroZ/lazagne
 name: Credential Dumping from Browser
 platforms:
 - windows

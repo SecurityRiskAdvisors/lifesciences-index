@@ -7,8 +7,8 @@ controls:
 - SIEM
 - EDR
 - Antivirus
-description: Establish persistence on a target system by creating a WMI commandlineeventconsumer
-  event subscription that launches a dll with rundll32
+description: Establish persistence on a target system by creating a WMI CommandlineEventConsumer
+  event subscription that launches a malicious dll payload with rundll32
 detect:
 - Payload on disk triggers an alert in EDR or other endpoint security tool
 - Suspicious process execution is detected by EDR or other endpoint security tool,
