@@ -5,15 +5,18 @@ block:
 controls:
 - Antivirus
 - EDR
-description: Execute a DLL function directly using rundll32 as an encoded PowerShell
-  command
+description: Execute a malicious DLL's function directly using rundll32 as an encoded
+  PowerShell command
 detect:
 - Suspicious process execution/behavior is detected by EDR or other endpoint security
   tool, or alerted in SIEM based on process creation events
 - Payload on disk triggers an alert in EDR or other endpoint security tool
 guidance:
-- cmd> powershell -nop -exec bypass -encodedcommand {{ encoded_command }}
-- encoded_command -> rundll32 {{ dll_payload }} {{ dll_export }}"
+- 'cmd> powershell -nop -exec bypass -encodedcommand {{ encoded_command }}
+
+  encoded_command -> rundll32 {{ dll_payload }} {{ dll_export }}"
+
+  '
 logs:
 - edr:telemetry
 - process_create

@@ -3,8 +3,8 @@ block:
 controls:
 - SIEM
 - EDR
-description: Disable advanced auditing features on the endpoint using the native utility
-  "auditpol.exe"
+description: Disable Windows advanced auditing features on the endpoint using the
+  native utility "auditpol.exe"
 detect:
 - Suspicious process execution is detected by EDR or other endpoint security tool,
   or alerted in SIEM based on process creation events

@@ -2,12 +2,12 @@ block:
 - Suspicious behavior is blocked by EDR or other endpoint security tool
 controls:
 - EDR
-description: Launch a executable program that will load an encryted DLL from its resource
-  section into memory
+description: Launch a exe payload that will load a DLL from its resource section into
+  memory
 detect:
 - Suspicious behavior is detected by EDR or other endpoint security tool
 guidance:
-- '{{ binary_payload }}'
+- '{{ exe_payload }}'
 logs:
 - edr:telemetry
 metadata:

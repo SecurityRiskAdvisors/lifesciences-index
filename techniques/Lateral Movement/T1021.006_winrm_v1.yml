@@ -5,13 +5,14 @@ block:
 controls:
 - EDR
 - Antivirus
-description: Move laterally to another system by using WinRM and rundll32
+description: Move laterally to another system by using WinRM to execute a DLL payload
+  using rundll32.
 detect:
 - Suspicious process execution/behavior is detected by EDR or other endpoint security
   tool, or alerted in SIEM based on process creation events
 - Payload on disk triggers an alert in EDR or other endpoint security tool
 guidance:
-- ps> Invoke-Command -ComputerName {{ target }} -ScriptBlock { rundll32 {{ dll_payload
+- PS> Invoke-Command -ComputerName {{ target }} -ScriptBlock { rundll32 {{ dll_payload
   }} {{ dll_export }} }
 logs:
 - edr:telemetry

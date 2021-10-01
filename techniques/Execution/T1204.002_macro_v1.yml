@@ -4,7 +4,7 @@ controls:
 - EDR
 - SIEM
 - Antivirus
-description: Establish an initial foothold using a malicious  Office macro
+description: Establish an initial foothold using a malicious Office macro
 detect:
 - Suspicious process execution is detected by EDR or other endpoint security tool,
   or alerted in SIEM based on process creation events

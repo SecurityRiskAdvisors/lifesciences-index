@@ -10,8 +10,8 @@ description: 'Encrypt a large amount of files on a remote share to simulate remo
   '
 detect:
 - Suspicious process execution is detected by EDR or other endpoint security tool
-- A large amount of file deletion and creations and/or file creations with known ransomware
-  extensions are alerted on in the SIEM
+- A large amount of file deletion and/or file creations are alerted on in the SIEM
+  or file monitoring software
 guidance:
 - '{{ ransomware_binary }}'
 logs:

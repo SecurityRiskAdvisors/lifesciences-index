@@ -3,8 +3,8 @@ block:
 controls:
 - SIEM
 - UEBA
-description: Perform a kerberoast attack by requesting Kerberos tickets for accounts
-  with service principal names
+description: Perform a kerberoast attack by requesting Kerberos tickets for Active
+  Directory accounts with service principal names set
 detect:
 - Alert on a high volume of 4769 ticket request events from a single source
 - Configure a honey account with a service principal name set and alert on any ticket

@@ -7,7 +7,7 @@ controls:
 - Antivirus
 - UEBA
 description: Using wmic.exe, execute a command on a remote system that will download
-  and execute an executable payload
+  and execute an executable payload hosted on a share.
 detect:
 - Suspicious process execution/behavior is detected by EDR or other endpoint security
   tool, or alerted in SIEM based on process creation events

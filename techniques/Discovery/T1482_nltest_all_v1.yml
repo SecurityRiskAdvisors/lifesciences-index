@@ -3,7 +3,7 @@ block:
 controls:
 - SIEM
 - EDR
-description: Identify domain trust relationships
+description: Identify all domain trust relationships using nltest
 detect:
 - Suspicious process execution is detected by EDR or other endpoint security tool,
   or alerted in SIEM based on process creation events
