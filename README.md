@@ -1,6 +1,6 @@
 # Life Sciences Threat Simulation Index
 
-Life Sciences Threat Simulation Index Release Candidate v1 (Q2 2021)
+Life Sciences Threat Simulation Index Release v1 (Q3 2021)
 
 ## Groups
 
